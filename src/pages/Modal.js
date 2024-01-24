@@ -9,6 +9,7 @@ const ytdl = window.require("ytdl-core")
 const { ipcRenderer } = window.require("electron")
 const Path = window.require("path")
 const desktopDir = Path.join(window.require("os").homedir(), "Desktop")
+const defaultDownloadPath = window.require("downloads-folder")()
 const fs = window.require("fs")
 
 const Modal = styled.div`
@@ -31,7 +32,7 @@ const Close = styled.button`
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
   display: flex;
   align-items: center;
@@ -56,15 +57,13 @@ const VideoBackground = styled.div`
   align-items: center;
   justify-content: center;
   background-color: #1A1A1A;
-  padding: 3vh;
-  padding-left: 0;
-  padding-right: 0;
+  padding: 3vh 0;
   border-radius: 3vh;
   margin: 2vh;
 `
 const Thumbnail = styled.img`
   width: 60vw;
-  border-radius: 15px;
+  border-radius: 2vh;
 `
 const Info = styled.div`
   width: 60vw;
@@ -80,8 +79,7 @@ const ChannelName = styled.span`
 `
 const VideoTitle = styled.h5`
   font-size: 2.5vw;
-  margin: 3px;
-  margin-left: 0;
+  margin: 3px 3px 3px 0;
   text-align: left;
 `
 
@@ -102,7 +100,7 @@ const selectStyle = {
   control: (styles) => ({
     ...styles,
     backgroundColor: "#454545",
-    border: "solid #5D635A",
+    border: "solid 0.25vh #5D635A",
     boxShadow: "0 0 20px #393d38",
     width: "100%",
     borderRadius: "1vh",
@@ -111,11 +109,12 @@ const selectStyle = {
     ...styles,
     color: "#C9D2C9",
     fontWeight: 600,
+    fontSize: "3vw"
   }),
   menu: (styles) => ({
     ...styles,
     backgroundColor: "#454545",
-    border: "solid #5D635A",
+    border: "solid 0.25vh #5D635A",
     borderRadius: "1vh",
     boxShadow: "0 0 20px #393d38",
     width: "100%",
@@ -125,6 +124,7 @@ const selectStyle = {
       ...styles,
       color: "#C9D2C9",
       fontWeight: 600,
+      fontSize: "3vw",
       backgroundColor: isSelected? `#5D635A` : `#454545`,
       ":active": {
         backgroundColor: isSelected? `#5D635A` : `#474D45`,
@@ -143,15 +143,19 @@ const PathDiv = styled.div`
 const PathInput = styled.input`
   width: 72%;
   height: 5vh;
-  border-radius: 1vw;
+  border-radius: 1vh;
   font-size: 3vw;
   font-weight: 700;
   text-indent: 1.5vw;
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
+
+  &:disabled {
+    background-color: #1f1f1f;
+  }
 `
 const SelectPath = styled.button`
   width: 5vh;
@@ -161,7 +165,7 @@ const SelectPath = styled.button`
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
 `
 const SelectPathImg = styled.img`
@@ -192,7 +196,7 @@ const DownloadBtn = styled.button`
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
   margin-top: 1vh;
 `
@@ -222,7 +226,7 @@ const existModalStyle = {
     borderRadius: "10px",
     boxShadow: "0 0 20px #393d38",
     backgroundColor: "#1f1f1f",
-    border: "solid 2px #5D635A",
+    border: "solid 0.25vh #5D635A",
     justifyContent: "center",
     overflow: "auto",
   },
@@ -245,7 +249,7 @@ const ExistBtn = styled.button`
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
   margin-top: 1vh;
   font-weight: 700;
@@ -271,6 +275,10 @@ export default function(props) {
       const author = info.author
       setChannelName(author.name)
       setVideoTitle(info.title)
+      const beforePath = window.localStorage.getItem("lastPath")
+      if(!beforePath) setPath(Path.join(defaultDownloadPath, `${info.title}.${mime.value}`))
+      else setPath(Path.join(beforePath, `${info.title}.${mime.value}`))
+      setPathDisabled(false)
     }).catch((e) => {
       setIsOpenNoVideoModal(true)
       props.setUrl("")
@@ -297,7 +305,9 @@ export default function(props) {
   ]
   const [mime, setMime] = useState(videoMimeOptions[0])
   
-  const [path, setPath] = useState(Path.join(desktopDir, `media.${mime.value}`))
+  // const [path, setPath] = useState(Path.join(desktopDir, `media.${mime.value}`))
+  const [path, setPath] = useState("로딩중...")
+  const [pathDisabled, setPathDisabled] = useState(true)
 
   function changeType(t) {
     if(type.value === t.value) return
@@ -342,6 +352,7 @@ export default function(props) {
       }, 2210)
       return
     }
+    window.localStorage.setItem("lastPath", Path.dirname(path))
     ipcRenderer.send("Download", [url, id, type.value, mime.value, path, getDownloadId()])
     props.setModal(false)
     props.setUrl("")
@@ -387,7 +398,7 @@ export default function(props) {
         />
       </TypeDiv>
       <PathDiv>
-        <PathInput value={path} onChange={(e) => {setPath(e.target.value)}} />
+        <PathInput value={path} onChange={(e) => {setPath(e.target.value)}} disabled={pathDisabled} />
         <SelectPath onClick={(e) => {
           ipcRenderer.send("SelectPath", { type: type.value, mime: mime.value })
           addPathSelectedEvent()

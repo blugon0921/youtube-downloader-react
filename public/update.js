@@ -14,18 +14,15 @@ module.exports = (app, win) => {
     })
     autoUpdater.on("update-available", (info) => {
         log.info("Update Available")
-        win.hide()
         dialog.showMessageBox(win, {
             type: "info",
-            title: "업데이트 확인",
+            title: "Youtube Downloader 업데이트 확인",
             message: "새로운 업데이트가 있습니다. 지금 업데이트하시겠습니까?",
             cancelId: 1,
             buttons: ["업데이트", "나중에"]
         }).then(result => {
             if(result.response === 0) {
                 autoUpdater.downloadUpdate()
-            } else {
-                win.show()
             }
         })
     })
@@ -35,7 +32,6 @@ module.exports = (app, win) => {
     autoUpdater.on("error", (err) => {
         log.info("Error in auto-updater. " + err)
         dialog.showErrorBox("Error: ", err == null ? "unknown" : (err.stack || err).toString())
-        win.show()
     })
     let once = false
     autoUpdater.on("download-progress", (progressObj) => {
@@ -66,10 +62,7 @@ module.exports = (app, win) => {
         once = true
     })
     autoUpdater.on("update-downloaded", (info) => {
-        if(!isDownload) {
-            win.show()
-            return
-        }
+        if(!isDownload) return
         log.info("Update complete")
 
         dialog.showMessageBox(win, {
@@ -81,8 +74,6 @@ module.exports = (app, win) => {
         }).then(result => {
             if(result.response === 0) {
                 autoUpdater.quitAndInstall(false, true)
-            } else {
-                win.show()
             }
         })
     })

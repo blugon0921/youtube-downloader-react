@@ -48,7 +48,7 @@ const UrlInput = styled.input`
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
 
   &.wrong::placeholder {
@@ -63,7 +63,7 @@ const Download = styled.button`
   padding: 0.5vw;
   color: #C9D2C9;
   background-color: #454545;
-  border: solid #5D635A;
+  border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
 `
 const DownloadIcon = styled.img`
@@ -79,15 +79,13 @@ const History = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-radius: 3.6vw;
   padding: 4vh;
-  border: solid 2px #5D635A;
+  border: solid 0.25vh #5D635A;
   background-color: #303030;
   box-shadow: 0 0 20px #393d38;
 
   border-bottom: none;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+  border-radius: 3.6vw 3.6vw 0 0; //Left&Right: 0
 `
 
 const modalStyle = {
@@ -111,7 +109,7 @@ const modalStyle = {
     borderRadius: "10px",
     boxShadow: "0 0 20px #393d38",
     backgroundColor: "#1f1f1f",
-    border: "solid 2px #5D635A",
+    border: "solid 0.25vh #5D635A",
     justifyContent: "center",
     overflow: "auto",
   },
@@ -131,7 +129,7 @@ export default function() {
 
   return (
     <App id="App">
-      <Version>v1.0.6</Version>
+      <Version>v1.0.7</Version>
       <Icon src="icons/cloud-arrow-down-solid.svg"></Icon>
       <Title>Youtube Downloader</Title>
       <Center>

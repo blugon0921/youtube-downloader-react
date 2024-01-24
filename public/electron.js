@@ -8,6 +8,7 @@ const { exec } = require("child_process")
 const ffmpeg = require("ffmpeg-static-electron")
 let ffmpegPath = isDev? ffmpeg.path : `${__dirname}/../../app.asar.unpacked/node_modules/ffmpeg-static-electron/bin/win/x64/ffmpeg.exe`
 
+
 let win
 if(!fs.existsSync(AppData)) fs.mkdirSync(AppData)
 const isFirst = app.requestSingleInstanceLock()
@@ -19,14 +20,13 @@ if(!isFirst) {
 })
 
 /*
-고칠것들
+1.0.7
 
-1. Desktop 없으면 계속 다운로드됨
-2. 폴더 감지 정규식 수정(띄어쓰기 혹은 괄호에 문제있음) - 해결
-3. 파일 저장위치 저장
-4. 자동 업데이트 - 해?결
-5. 다운로드 순서 정렬 이상함 - 해?결
-6. 일부 영상 화질 낮게 다운됨 - 해결
+기본 저장 위치를 바탕화면이 아닌 다운로드 폴더로 변경
+파일 저장시 전에 저장했던 위치를 자동으로 불러오게 수정
+기본 저장 제목을 media에서 영상 제목으로 수정
+프로그램 이름이 Youtube_Downloader로 뜨던 버그 수정(언더바 제거)
+디자인 수정
 */
 if(!isDev) Menu.setApplicationMenu(false)
 
@@ -87,7 +87,8 @@ function createWindow() {
             contextIsolation: false,
             enableRemoteModule: true,
             webSecurity: false,
-        }
+        },
+        title: "Youtube Downloader"
     })
     require("@electron/remote/main").enable(win.webContents)
 
@@ -99,6 +100,17 @@ function createWindow() {
             win.show()
             // if(isDev) win.webContents.openDevTools()
         })
+        win.on("show", () => {
+            require("./update")(app, win)
+            const primaryDisplay = screen.getAllDisplays()[0]
+            const { width, height } = primaryDisplay.workAreaSize
+            const windowSize = {
+                width: Math.ceil(width*(975/3840)), //3840기준 975
+                height: Math.ceil(height*(1300/2160)), //2160기준 1300
+            }
+            win.setSize(windowSize.width, windowSize.height)
+            win.setPosition(width-windowSize.width-1, height-windowSize.height-1)
+        })
     }
     return win
 }
@@ -108,7 +120,7 @@ app.whenReady().then(() => {
         win = createWindow()
         require("@electron/remote/main").initialize()
         initTrayIconMenu()
-        require("./update")(app, win)
+        // require("./update")(app, win)
     }
 })
 
@@ -163,7 +175,7 @@ ipcMain.on("Download", async (event, args) => {
         }).pipe(fs.createWriteStream(audioPath)).on("close", async () => {
             complete++
             if(type === "audio") {
-                event.sender.send(`SetStatus${downloadId}`, [true])
+                event.sender.send(`SetStatus${downloadId}`, [null, true])
                 downloadingCount--
                 if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
             }
