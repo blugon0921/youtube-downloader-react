@@ -1,4 +1,4 @@
-const { app, Menu, screen, BrowserWindow, ipcMain, dialog, nativeImage, Tray } = require("electron")
+const { app, Menu, screen, BrowserWindow, ipcMain, dialog, nativeImage, Tray, shell } = require("electron")
 const isDev = require("electron-is-dev")
 const Path = require("path")
 const { AppData } = require("./electronModule")
@@ -20,13 +20,13 @@ if(!isFirst) {
 })
 
 /*
-1.0.7
+1.0.8
 
-기본 저장 위치를 바탕화면이 아닌 다운로드 폴더로 변경
-파일 저장시 전에 저장했던 위치를 자동으로 불러오게 수정
-기본 저장 제목을 media에서 영상 제목으로 수정
-프로그램 이름이 Youtube_Downloader로 뜨던 버그 수정(언더바 제거)
 디자인 수정
+영상 제목에 파일 이름으로 사용할 수 없는 문자(\, /, :, *, ?, ", <, >, |)가 있을 시 처음 불러올 때 제거
+파일 저장에 사용할 수 없는 문자가 포함되어 있을시 알림 출력
+메인 화면에서 기록에 있는 파일 클릭시 열리는 기능 추가
+파일 저장 버튼 클릭시 적혀있던 폴더에서 열리게 수정
 */
 if(!isDev) Menu.setApplicationMenu(false)
 
@@ -131,12 +131,14 @@ app.on("window-all-closed", () => {
 ipcMain.on("SelectPath", (event, args) => {
     const type = args.type
     const mime = args.mime
+    const defaultPath = args.defaultPath
 
     dialog.showSaveDialog(win, {
         title: "저장",
         filters: [
             { name: (type === "video")? "동영상 파일" : "오디오 파일", extensions: [mime]},
-        ]
+        ],
+        defaultPath: defaultPath
     }).then(async result => {
         if (!result.canceled) {
             const filePath = result.filePath
@@ -236,6 +238,10 @@ ipcMain.on("Download", async (event, args) => {
         downloadingCount--
         if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
     }
+})
+
+ipcMain.on("OpenFile", (event, args) => {
+    shell.openPath(args[0])
 })
 
 function randomString(length) {

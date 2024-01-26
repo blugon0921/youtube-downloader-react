@@ -51,7 +51,7 @@ const Top = styled.div`
   margin-top: 1vh;
 `
 const VideoBackground = styled.div`
-  width: 73vw;
+  width: 85%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -84,18 +84,20 @@ const VideoTitle = styled.h5`
 `
 
 const TypeDiv = styled.div`
-  width: 100%;
-  margin-top: 2vh;
+  margin: 2vh auto auto; //Top: 2vh
+  width: 85%;
+  height: 5vh;
   text-align: center;
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: space-between;
 `
 const selectStyle = {
   container: (styles) => ({
     ...styles,
-    width: "40%",
+    width: "45%",
+    height: "100%"
   }),
   control: (styles) => ({
     ...styles,
@@ -103,6 +105,7 @@ const selectStyle = {
     border: "solid 0.25vh #5D635A",
     boxShadow: "0 0 20px #393d38",
     width: "100%",
+    height: "100%",
     borderRadius: "1vh",
   }),
   singleValue: (styles) => ({
@@ -134,15 +137,16 @@ const selectStyle = {
 }
 
 const PathDiv = styled.div`
-  margin-top: 2vh;
-  width: 100%;
+  margin: 2vh auto auto; //Top: 2vh
+  width: 85%;
+  height: 5vh;
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: space-between;
 `
 const PathInput = styled.input`
-  width: 72%;
-  height: 5vh;
+  width: 80%;
+  height: 100%;
   border-radius: 1vh;
   font-size: 3vw;
   font-weight: 700;
@@ -174,8 +178,9 @@ const SelectPathImg = styled.img`
 `
 
 const Bottom = styled.div`
-  width: 94%;
-  height: 17.5%;
+  margin: 0.5vh auto auto; //Top: 2vh
+  width: 85%;
+  height: 13%;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -189,7 +194,7 @@ const Message = styled.span`
 `
 const DownloadBtn = styled.button`
   position: relative;
-  width: 10vh;
+  width: 8vh;
   height: 5vh;
   border-radius: 1vh;
   font-size: 3vw;
@@ -198,7 +203,7 @@ const DownloadBtn = styled.button`
   background-color: #454545;
   border: solid 0.25vh #5D635A;
   box-shadow: 0 0 20px #393d38;
-  margin-top: 1vh;
+  margin-top: 0.5vh;
 `
 const DownloadImg = styled.img`
   width: 70%;
@@ -217,7 +222,7 @@ const existModalStyle = {
   },
   content: {
     width: "55%",
-    height: "25%",
+    height: "32.5%",
     zIndex: "2",
     position: "absolute",
     top: "50%",
@@ -243,7 +248,7 @@ const ExistBtnsDiv = styled.div`
 const ExistBtn = styled.button`
   position: relative;
   width: 25%;
-  height: 50%;
+  height: 40%;
   border-radius: 1vh;
   font-size: 3vw;
   padding: 0.5vw;
@@ -253,15 +258,22 @@ const ExistBtn = styled.button`
   box-shadow: 0 0 20px #393d38;
   margin-top: 1vh;
   font-weight: 700;
-  
-  &.noVideo {
-    
-  }
 `
+
+const cantChars = [
+    "\\",
+    "/",
+    ":",
+    "*",
+    "?",
+    "\"",
+    "<",
+    ">",
+    "|",
+]
 
 export default function(props) {
   const url = props.url
-  // const url = "https://www.youtube.com/watch?v=c4Fw8oRP-e8"
   const id = youtubeID(url)
   const thumbnail = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`
   
@@ -276,8 +288,12 @@ export default function(props) {
       setChannelName(author.name)
       setVideoTitle(info.title)
       const beforePath = window.localStorage.getItem("lastPath")
-      if(!beforePath) setPath(Path.join(defaultDownloadPath, `${info.title}.${mime.value}`))
-      else setPath(Path.join(beforePath, `${info.title}.${mime.value}`))
+      let fileTitle = info.title
+      cantChars.forEach((c) => {
+        fileTitle = fileTitle.replaceAll(c, "")
+      })
+      if(!beforePath) setPath(Path.join(defaultDownloadPath, `${fileTitle}.${mime.value}`))
+      else setPath(Path.join(beforePath, `${fileTitle}.${mime.value}`))
       setPathDisabled(false)
     }).catch((e) => {
       setIsOpenNoVideoModal(true)
@@ -304,10 +320,10 @@ export default function(props) {
     { value: "m4a", label: "M4A" },
   ]
   const [mime, setMime] = useState(videoMimeOptions[0])
-  
-  // const [path, setPath] = useState(Path.join(desktopDir, `media.${mime.value}`))
+
   const [path, setPath] = useState("로딩중...")
   const [pathDisabled, setPathDisabled] = useState(true)
+
 
   function changeType(t) {
     if(type.value === t.value) return
@@ -334,11 +350,15 @@ export default function(props) {
   const [messageTransition, setMessageTransition] = useState(0)
 
   const [isOpenExistModal, setIsOpenExistModal] = useState(false)
-  // const [isOpenExistModal, setIsOpenExistModal] = useState(true)
 
-
+  const setIsOpenAlertModal = props.setIsOpenAlertModal
+  const setAlertMessage = props.setAlertMessage
   function downloadStart() {
     setIsOpenExistModal(false)
+    if(path === "로딩중...") {
+      setAlertMessage("아직 동영상이 로딩중입니다.")
+      return setIsOpenAlertModal(true)
+    }
     if(!fs.existsSync(Path.dirname(path))) {
       setMessageOpacity(1)
       setTimeout(() => {
@@ -352,6 +372,14 @@ export default function(props) {
       }, 2210)
       return
     }
+    if(1 < path.split(":").length-1) {
+      setAlertMessage("파일 저장시 드라이브 입력 외에는 ':'을 사용할 수 없습니다.")
+      return setIsOpenAlertModal(true)
+    }
+    if(path.includes("*") || path.includes("?") || path.includes("\"") || path.includes("<") || path.includes(">") || path.includes("|")) {
+      setAlertMessage("파일 저장에 사용할 수 없는 문자가 포함되어 있습니다.(*, ?, \", <, >, |)")
+      return setIsOpenAlertModal(true)
+    }
     window.localStorage.setItem("lastPath", Path.dirname(path))
     ipcRenderer.send("Download", [url, id, type.value, mime.value, path, getDownloadId()])
     props.setModal(false)
@@ -360,7 +388,8 @@ export default function(props) {
     items.unshift({
       url: url,
       type: type.value,
-      downloadId: getDownloadId()
+      downloadId: getDownloadId(),
+      path: path
     })
     props.setHistoryItems(items)
     setDownloadId(getDownloadId()+1)
@@ -400,7 +429,7 @@ export default function(props) {
       <PathDiv>
         <PathInput value={path} onChange={(e) => {setPath(e.target.value)}} disabled={pathDisabled} />
         <SelectPath onClick={(e) => {
-          ipcRenderer.send("SelectPath", { type: type.value, mime: mime.value })
+          ipcRenderer.send("SelectPath", { type: type.value, mime: mime.value, defaultPath: path })
           addPathSelectedEvent()
         }}><SelectPathImg src="icons/folder-solid.svg" /></SelectPath>
       </PathDiv>
@@ -431,6 +460,7 @@ export default function(props) {
           <ExistBtn onClick={downloadStart}>계속</ExistBtn>
         </ExistBtnsDiv>
       </ReactModal>
+
       <ReactModal
           isOpen={isOpenNoVideoModal}
           style={existModalStyle}

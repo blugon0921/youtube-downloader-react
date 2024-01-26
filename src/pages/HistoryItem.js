@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { styled } from 'styled-components'
 import { youtubeID } from "../module"
+const fs = window.require("fs")
 const ytdl = window.require("ytdl-core")
 const { ipcRenderer } = window.require("electron")
 
@@ -14,8 +15,16 @@ const HistoryItem = styled.div`
   flex-direction: row;
   padding: 2.75vw;
   margin-bottom: 2.5vh;
+  transition: 0.2s;
+
   &:last-child {
     margin-bottom: 0;
+  }
+
+  &:hover {
+    transform: scale(1.025);
+    filter: brightness(1.25);
+    box-shadow: #464646 0 0 10px;
   }
 `
 const Icon = styled.img`
@@ -44,8 +53,7 @@ const ChannelName = styled.span`
 const VideoTitle = styled.h5`
   width: 100%;
   font-size: 2.5vw;
-  margin: 3px;
-  margin-left: 0;
+  margin: 3px 3px 3px 0; //Left: 0
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
@@ -72,6 +80,7 @@ export default function(props) {
   const [channelName, setChannelName] = useState("검색중...")
   const [videoTitle, setVideoTitle] = useState("검색중...")
   const downloadId = props.downloadId
+  const path = props.path
 
   useEffect(() => {
     ytdl.getInfo(url).then(video => {
@@ -84,16 +93,6 @@ export default function(props) {
       setStatusText("영상을 찾을 수 없습니다")
     })
 
-    // ipcRenderer.once(`SetStatus${downloadId}`, (event, args) => {
-    //   const isComplete = args[0]
-    //   if(isComplete) {
-    //     setStatus("complete")
-    //     setStatusText("다운로드 완료")
-    //   } else {
-    //     setStatus("faild")
-    //     setStatusText("다운로드 실패")
-    //   }
-    // })
     ipcRenderer.on(`SetStatus${downloadId}`, (event, args) => {
       const message = args[0]
       const isComplete = args[1]
@@ -114,8 +113,17 @@ export default function(props) {
   const [status, setStatus] = useState("downloading")
   const [statusText, setStatusText] = useState("다운로드중...")
 
+  const setIsOpenAlertModal = props.setIsOpenAlertModal
+  const setAlertMessage = props.setAlertMessage
+
   return (
-    <HistoryItem>
+    <HistoryItem onClick={() => {
+      if(!fs.existsSync(path)) {
+        setAlertMessage("파일이 변형되었거나 존재하지 않습니다.")
+        return setIsOpenAlertModal(true)
+      }
+      ipcRenderer.send("OpenFile", [path])
+    }}>
       {/* <Thumbnail src={thumbnail} /> */}
       <Icon src={`icons/file-${type}-solid.svg`} alt={type}></Icon>
       <Info>

@@ -115,21 +115,48 @@ const modalStyle = {
   },
 }
 
+const AlertBtnsDiv = styled.div`
+  display: flex;
+  height: 50%;
+  align-items: center;
+  justify-content: space-evenly;
+`
+const AlertBtn = styled.button`
+  position: relative;
+  width: 25%;
+  height: 50%;
+  border-radius: 1vh;
+  font-size: 3vw;
+  padding: 0.5vw;
+  color: #C9D2C9;
+  background-color: #454545;
+  border: solid 0.25vh #5D635A;
+  box-shadow: 0 0 20px #393d38;
+  margin-top: 1vh;
+  font-weight: 700;
+`
 
 export default function() {
   const [url, setUrl] = useState("")
   const [isOpenModal, setIsOpenModal] = useState(false)
   // const [isOpenModal, setIsOpenModal] = useState(true)
   const [historyItems, setHistoryItems] = useState([
+    // {
+    //   url: "https://www.youtube.com/watch?v=FRkZi3ZXrVc",
+    //   type: "video",
+    //   downloadId: 0
+    // }
   ])
 
   const [inputClass, setInputClass] = useState("")
   const [placeholder, setPlaceholder] = useState("유튜브 영상 링크를 입력하세요.")
 
+  const [isOpenAlertModal, setIsOpenAlertModal] = useState(false)
+  const [alertMessage, setAlertMessage] = useState("")
 
   return (
     <App id="App">
-      <Version>v1.0.7</Version>
+      <Version>v1.0.8</Version>
       <Icon src="icons/cloud-arrow-down-solid.svg"></Icon>
       <Title>Youtube Downloader</Title>
       <Center>
@@ -150,13 +177,15 @@ export default function() {
       </Center>
       <History>
         {
-          // historyItems.reverse().map((item) => {
           historyItems.map((item) => {
             return <HistoryItem
               url={item.url}
               type={item.type}
               downloadId={item.downloadId}
               key={item.downloadId}
+              path={item.path}
+              setIsOpenAlertModal={setIsOpenAlertModal}
+              setAlertMessage={setAlertMessage}
             />
           })
         }
@@ -166,14 +195,52 @@ export default function() {
         style={modalStyle}
         ariaHideApp={false}
       >
-        <Modal 
+        <Modal
           url={url}
           setUrl={setUrl}
           setModal={setIsOpenModal}
           historyItems={historyItems}
           setHistoryItems={setHistoryItems}
+          setIsOpenAlertModal={setIsOpenAlertModal}
+          setAlertMessage={setAlertMessage}
         >
         </Modal>
+      </ReactModal>
+
+      <ReactModal
+          isOpen={isOpenAlertModal}
+          style={{
+            overlay: {
+              backgroundColor: " rgba(0, 0, 0, 0.3)",
+              width: "100vw",
+              height: "100vh",
+              zIndex: "1",
+              position: "fixed",
+              top: "0",
+              left: "0",
+            },
+            content: {
+              width: "55%",
+              height: "25%",
+              zIndex: "2",
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              borderRadius: "10px",
+              boxShadow: "0 0 20px #393d38",
+              backgroundColor: "#1f1f1f",
+              border: "solid 0.25vh #5D635A",
+              justifyContent: "center",
+              overflow: "auto",
+            },
+          }}
+          ariaHideApp={false}
+      >
+        <h3>{alertMessage}</h3>
+        <AlertBtnsDiv>
+          <AlertBtn onClick={() => setIsOpenAlertModal(false)}>확인</AlertBtn>
+        </AlertBtnsDiv>
       </ReactModal>
     </App>
   )
