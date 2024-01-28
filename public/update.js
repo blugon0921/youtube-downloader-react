@@ -6,7 +6,6 @@ autoUpdater.autoDownload = false
 
 module.exports = (app, win) => {
     autoUpdater.checkForUpdates()
-    let progressBar
     let isDownload = false
 
     autoUpdater.on("checking-for-update", () => {
@@ -33,8 +32,10 @@ module.exports = (app, win) => {
         log.info("Error in auto-updater. " + err)
         dialog.showErrorBox("Error: ", err == null ? "unknown" : (err.stack || err).toString())
     })
+    let progressBar
     let once = false
     autoUpdater.on("download-progress", (progressObj) => {
+        if(progressBar && progressBar.isCompleted()) return
         let log_message = `Download Speed: ${progressObj.bytesPerSecond}bytes/s`
         log_message = log_message + " - Download: " + progressObj.percent + "%"
         log_message = log_message + " (" + progressObj.transferred + "/" + progressObj.total + ")"

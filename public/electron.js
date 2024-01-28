@@ -20,13 +20,10 @@ if(!isFirst) {
 })
 
 /*
-1.0.8
+1.0.9
 
-디자인 수정
-영상 제목에 파일 이름으로 사용할 수 없는 문자(\, /, :, *, ?, ", <, >, |)가 있을 시 처음 불러올 때 제거
-파일 저장에 사용할 수 없는 문자가 포함되어 있을시 알림 출력
-메인 화면에서 기록에 있는 파일 클릭시 열리는 기능 추가
-파일 저장 버튼 클릭시 적혀있던 폴더에서 열리게 수정
+영상 다운로드 진행도와 오디오 다운로드 진행도가 함께 표시되게 변경
+자동 업데이트가 되지 않는 오류 수정
 */
 if(!isDev) Menu.setApplicationMenu(false)
 
@@ -101,7 +98,7 @@ function createWindow() {
             // if(isDev) win.webContents.openDevTools()
         })
         win.on("show", () => {
-            require("./update")(app, win)
+            // require("./update")(app, win)
             const primaryDisplay = screen.getAllDisplays()[0]
             const { width, height } = primaryDisplay.workAreaSize
             const windowSize = {
@@ -120,7 +117,7 @@ app.whenReady().then(() => {
         win = createWindow()
         require("@electron/remote/main").initialize()
         initTrayIconMenu()
-        // require("./update")(app, win)
+        require("./update")(app, win)
     }
 })
 
@@ -150,6 +147,10 @@ ipcMain.on("SelectPath", (event, args) => {
 })
 
 
+const DownloadType = {
+    AUDIO: "audio",
+    VIDEO: "video"
+}
 ipcMain.on("Download", async (event, args) => {
     const url = args[0]
     const id = args[1]
@@ -166,17 +167,37 @@ ipcMain.on("Download", async (event, args) => {
         const randomCode = randomString(7)
         const videoPath = `${Path.dirname(path)}/.${Path.basename(path)}.${randomCode}.mp4`
         let audioPath = `${Path.dirname(path)}/.${Path.basename(path)}.${randomCode}.mp3`
-        if(type === "audio") audioPath = path
+        if(type === DownloadType.AUDIO) audioPath = path
+        const videoInfo = (await ytdl.getInfo(url))
+        const isLive = videoInfo.videoDetails.isLiveContent && videoInfo.videoDetails.liveBroadcastDetails?.isLiveNow
 
+        let liveDotInterval
+        if(isLive) {
+            let dot = " ."
+            liveDotInterval = setInterval(() => {
+                event.sender.send(`SetStatus${downloadId}`, [`생방송 다운로드중${dot}`])
+                if(dot.length < 6) dot +=" ."
+                else dot = " ."
+            }, 500)
+        }
         let complete = 0
+        let audioDownloadMsg = `오디오 다운로드중: 0%`
+        let videoDownloadMsg = `영상 다운로드중: 0%`
         const audio = await ytdl(id,{ //오디오 생성
             quality: "highestaudio",
             format: "mp3"
         }).on("progress", async (chunkLength, downloaded, total) => {
-            event.sender.send(`SetStatus${downloadId}`, [`오디오 다운로드중: ${Math.round(downloaded/total*1000)/10}%`])
+            if(!isLive) {
+                if(type === DownloadType.AUDIO) event.sender.send(`SetStatus${downloadId}`, [`오디오 다운로드중: ${Math.round(downloaded/total*1000)/10}%`])
+                else {
+                    const percent = Math.round(downloaded/total*1000)/10
+                    audioDownloadMsg = `오디오 다운로드중: ${(percent===100)? "완료" : `${percent}%`}`
+                    event.sender.send(`SetStatus${downloadId}`, [`${audioDownloadMsg}\n${videoDownloadMsg}`])
+                }
+            }
         }).pipe(fs.createWriteStream(audioPath)).on("close", async () => {
             complete++
-            if(type === "audio") {
+            if(type === DownloadType.AUDIO) {
                 event.sender.send(`SetStatus${downloadId}`, [null, true])
                 downloadingCount--
                 if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
@@ -187,13 +208,18 @@ ipcMain.on("Download", async (event, args) => {
             downloadingCount--
             if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
         })
-        if(type === "audio") return
+        if(type === DownloadType.AUDIO) return
 
         const video = await ytdl(id,{ //비디오 생성
             quality: "highestvideo",
             format: "mp4"
         }).on("progress", async (chunkLength, downloaded, total) => {
-            event.sender.send(`SetStatus${downloadId}`, [`영상 다운로드중: ${Math.round(downloaded/total*1000)/10}%`])
+            // if(!isLive) event.sender.send(`SetStatus${downloadId}`, [`영상 다운로드중: ${Math.round(downloaded/total*1000)/10}%`])
+            if(!isLive) {
+                const percent = Math.round(downloaded/total*1000)/10
+                videoDownloadMsg = `영상 다운로드중: ${(percent===100)? "완료" : `${percent}%`}`
+                event.sender.send(`SetStatus${downloadId}`, [`${audioDownloadMsg}\n${videoDownloadMsg}`])
+            }
         }).pipe(fs.createWriteStream(videoPath)).on("close", () => {
             complete++
         }).on("error", async (err) => {
@@ -206,6 +232,7 @@ ipcMain.on("Download", async (event, args) => {
 
         const interval = setInterval(() => { //합치기
             if(complete === 2) {
+                if(liveDotInterval) clearInterval(liveDotInterval)
                 if(fs.existsSync(path)) fs.unlinkSync(path)
                 let dot = " ."
                 const dotInterval = setInterval(() => {

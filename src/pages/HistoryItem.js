@@ -62,6 +62,7 @@ const Status = styled.span`
   font-size: 2.25vw;
   font-weight: 600;
   color: #ada245;
+  white-space: pre-line;
 
   &.complete {
     color: #45ad5a;
