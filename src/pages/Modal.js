@@ -5,7 +5,7 @@ import Select, { StylesConfig } from "react-select"
 import { getDownloadId, setDownloadId } from "../index"
 import ReactModal from "react-modal";
 // import ytdl from "ytdl-core"
-const ytdl = window.require("ytdl-core")
+const ytdl = window.require("@distube/ytdl-core")
 const { ipcRenderer } = window.require("electron")
 const Path = window.require("path")
 const desktopDir = Path.join(window.require("os").homedir(), "Desktop")

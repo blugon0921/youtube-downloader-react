@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { styled } from 'styled-components'
 import { youtubeID } from "../module"
 const fs = window.require("fs")
-const ytdl = window.require("ytdl-core")
+const ytdl = window.require("@distube/ytdl-core")
 const { ipcRenderer } = window.require("electron")
 
 const HistoryItem = styled.div`

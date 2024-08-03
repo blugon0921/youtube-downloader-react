@@ -3,8 +3,8 @@ const isDev = require("electron-is-dev")
 const Path = require("path")
 const { AppData } = require("./electronModule")
 const fs = require("fs")
-const ytdl = require("ytdl-core")
-const { exec } = require("child_process")
+const ytdl = require("@distube/ytdl-core")
+const { exec} = require("child_process")
 const ffmpeg = require("ffmpeg-static-electron")
 let ffmpegPath = isDev? ffmpeg.path : `${__dirname}/../../app.asar.unpacked/node_modules/ffmpeg-static-electron/bin/win/x64/ffmpeg.exe`
 
@@ -20,10 +20,9 @@ if(!isFirst) {
 })
 
 /*
-1.0.9
+1.0.10
 
-영상 다운로드 진행도와 오디오 다운로드 진행도가 함께 표시되게 변경
-자동 업데이트가 되지 않는 오류 수정
+
 */
 if(!isDev) Menu.setApplicationMenu(false)
 
@@ -145,7 +144,6 @@ ipcMain.on("SelectPath", (event, args) => {
         console.log(err)
     })
 })
-
 
 const DownloadType = {
     AUDIO: "audio",
