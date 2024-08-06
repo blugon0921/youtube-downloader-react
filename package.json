@@ -1,6 +1,6 @@
 {
   "name": "youtube_downloader",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "author": "Blugon",
   "private": true,
   "main": "public/electron.js",
@@ -17,6 +17,7 @@
     "electron-progressbar": "^2.1.0",
     "electron-updater": "^6.1.7",
     "ffmpeg-static-electron": "^2.0.3",
+    "hidefile": "^3.0.0",
     "node-fetch": "^3.3.2",
     "progress-estimator": "^0.3.1",
     "react": "^18.2.0",
@@ -32,7 +33,8 @@
     "electron-builder": "^24.9.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "react-start": "react-scripts start",
+    "start": "concurrently \"cross-env NODE_ENV=development BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron .\"",
     "react-build": "react-scripts build",
     "build": "npm run react-build && electron-builder build -c.extraMetadata.main=build/electron.js",
     "test": "react-scripts test",

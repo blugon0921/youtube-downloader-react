@@ -3,6 +3,7 @@ const isDev = require("electron-is-dev")
 const Path = require("path")
 const { AppData } = require("./electronModule")
 const fs = require("fs")
+const hidefile = require("hidefile")
 const ytdl = require("@distube/ytdl-core")
 const { exec} = require("child_process")
 const ffmpeg = require("ffmpeg-static-electron")
@@ -20,7 +21,7 @@ if(!isFirst) {
 })
 
 /*
-1.0.10
+1.0.11
 
 
 */
@@ -28,11 +29,11 @@ if(!isDev) Menu.setApplicationMenu(false)
 
 let downloadingCount = 0
 let tray
-const trayImage = nativeImage.createFromPath(Path.join(__dirname, "whitelogo.png"))
-const downloadingImage = nativeImage.createFromPath(Path.join(__dirname, "logo512.png"))
+const trayImage = nativeImage.createFromPath(Path.join(__dirname, "whitelogo.png")).resize({ width: 16, height: 16 })
+const downloadingImage = nativeImage.createFromPath(Path.join(__dirname, "logo512.png")).resize({ width: 16, height: 16 })
 //트레이 아이콘
 function initTrayIconMenu() {
-    tray = new Tray(trayImage.resize({ width: 16, height: 16 }))
+    tray = new Tray(trayImage)
     const rightMenu = Menu.buildFromTemplate([
             {label: "프로그램 종료", type: "normal", checked: true, click: ()=> {
                 app.quit()
@@ -160,12 +161,12 @@ ipcMain.on("Download", async (event, args) => {
         if(!path.endsWith(mime)) path+=`.${mime}`
         if(!fs.existsSync(Path.dirname(path))) return
         downloadingCount++
-        await tray.setImage(downloadingImage.resize({ width: 16, height: 16 }))
+        await tray.setImage(downloadingImage)
 
         const randomCode = randomString(7)
         const videoPath = `${Path.dirname(path)}/.${Path.basename(path)}.${randomCode}.mp4`
         let audioPath = `${Path.dirname(path)}/.${Path.basename(path)}.${randomCode}.mp3`
-        if(type === DownloadType.AUDIO) audioPath = path
+        // if(type === DownloadType.AUDIO) audioPath = `${path}.mp3`
         const videoInfo = (await ytdl.getInfo(url))
         const isLive = videoInfo.videoDetails.isLiveContent && videoInfo.videoDetails.liveBroadcastDetails?.isLiveNow
 
@@ -193,18 +194,34 @@ ipcMain.on("Download", async (event, args) => {
                     event.sender.send(`SetStatus${downloadId}`, [`${audioDownloadMsg}\n${videoDownloadMsg}`])
                 }
             }
-        }).pipe(fs.createWriteStream(audioPath)).on("close", async () => {
+        }).pipe(fs.createWriteStream(audioPath)).on("open", async () => {
+            hidefile.hideSync(audioPath)
+        }).on("close", async () => {
             complete++
-            if(type === DownloadType.AUDIO) {
-                event.sender.send(`SetStatus${downloadId}`, [null, true])
-                downloadingCount--
-                if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
+            if(type === DownloadType.AUDIO) { //다운로드 타입이 오디오면
+                // event.sender.send(`SetStatus${downloadId}`, [null, true])
+
+                let dot = " ."
+                const dotInterval = setInterval(() => {
+                    event.sender.send(`SetStatus${downloadId}`, [`오디오 포맷 변경중${dot}`])
+                    if(dot.length < 6) dot +=" ."
+                    else dot = " ."
+                }, 500)
+                const command = `"${ffmpegPath.replaceAll("\\", "/")}" -i "${audioPath}" "${path}"`
+                exec(command, async (error, stdout, stderr) => {
+                    clearInterval(dotInterval)
+                    if(error) console.log(error)
+                    event.sender.send(`SetStatus${downloadId}`, [null, !error])
+                    downloadingCount--
+                    if(downloadingCount === 0) await tray.setImage(trayImage)
+                    fs.unlinkSync(audioPath)
+                })
             }
         }).on("error", async (err) => {
             console.log(err)
             event.sender.send(`SetStatus${downloadId}`, [false])
             downloadingCount--
-            if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
+            if(downloadingCount === 0) await tray.setImage(trayImage)
         })
         if(type === DownloadType.AUDIO) return
 
@@ -218,13 +235,15 @@ ipcMain.on("Download", async (event, args) => {
                 videoDownloadMsg = `영상 다운로드중: ${(percent===100)? "완료" : `${percent}%`}`
                 event.sender.send(`SetStatus${downloadId}`, [`${audioDownloadMsg}\n${videoDownloadMsg}`])
             }
-        }).pipe(fs.createWriteStream(videoPath)).on("close", () => {
+        }).pipe(fs.createWriteStream(videoPath)).on("open", () => {
+            hidefile.hideSync(videoPath)
+        }).on("close", () => {
             complete++
         }).on("error", async (err) => {
             console.log(err)
             event.sender.send(`SetStatus${downloadId}`, [false])
             downloadingCount--
-            if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
+            if(downloadingCount === 0) await tray.setImage(trayImage)
         })
     
 
@@ -241,16 +260,10 @@ ipcMain.on("Download", async (event, args) => {
                 const command = `"${ffmpegPath.replaceAll("\\", "/")}" -i "${videoPath}" -i "${audioPath}" -c copy "${path}"`
                 exec(command, async (error, stdout, stderr) => {
                     clearInterval(dotInterval)
-                    if(error) {
-                        console.log(error)
-                        event.sender.send(`SetStatus${downloadId}`, [null, false])
-                        downloadingCount--
-                        if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
-                    } else {
-                        event.sender.send(`SetStatus${downloadId}`, [null, true])
-                        downloadingCount--
-                        if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
-                    }
+                    if(error) console.log(error)
+                    event.sender.send(`SetStatus${downloadId}`, [null, !error])
+                    downloadingCount--
+                    if(downloadingCount === 0) await tray.setImage(trayImage)
                     fs.unlinkSync(videoPath)
                     fs.unlinkSync(audioPath)
                 })
@@ -261,7 +274,7 @@ ipcMain.on("Download", async (event, args) => {
         console.log(err)
         event.sender.send(`SetStatus${downloadId}`, [false])
         downloadingCount--
-        if(downloadingCount === 0) await tray.setImage(trayImage.resize({ width: 16, height: 16 }))
+        if(downloadingCount === 0) await tray.setImage(trayImage)
     }
 })
 
