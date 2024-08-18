@@ -30,11 +30,11 @@ const HistoryItem = styled.div`
 const Icon = styled.img`
   height: 100%;
 `
-const Thumbnail = styled.img`
-  height: 100%;
-  border-radius: 2vh;
-  margin: 1vh;
-`
+// const Thumbnail = styled.img`
+//   height: 100%;
+//   border-radius: 2vh;
+//   margin: 1vh;
+// `
 const Info = styled.div`
   width: 42vw;
   margin-left: 2vw;
@@ -114,22 +114,18 @@ export default function(props) {
   const [status, setStatus] = useState("downloading")
   const [statusText, setStatusText] = useState("다운로드중...")
 
-  const setIsOpenAlertModal = props.setIsOpenAlertModal
-  const setAlertMessage = props.setAlertMessage
+  // const setIsOpenAlertModal = props.setIsOpenAlertModal
+  // const setAlertMessage = props.setAlertMessage
 
   return (
-    <HistoryItem onClick={() => {
-      if(!fs.existsSync(path)) {
-        setAlertMessage("파일이 변형되었거나 존재하지 않습니다.")
-        return setIsOpenAlertModal(true)
-      }
-      ipcRenderer.send("OpenFile", [path])
+    <HistoryItem title="클릭시 유튜브로 이동" onClick={() => {
+      ipcRenderer.send("open-url-in-browser", url)
     }}>
       {/* <Thumbnail src={thumbnail} /> */}
       <Icon src={`icons/file-${type}-solid.svg`} alt={type}></Icon>
       <Info>
         <ChannelName>{channelName}</ChannelName>
-        <VideoTitle>{videoTitle}</VideoTitle>
+        <VideoTitle title={videoTitle}>{videoTitle}</VideoTitle>
         <Status className={status}>{statusText}</Status>
       </Info>
     </HistoryItem>

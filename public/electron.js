@@ -21,8 +21,11 @@ if(!isFirst) {
 })
 
 /*
-1.0.11
+1.0.12
 
+다운로드 안되는 버그 수정
+다운로드 기록 클릭시 유튜브로 이동
+다운로드 기록에 있는 제목에 마우스 호버시 풀 제목 표시
 
 */
 if(!isDev) Menu.setApplicationMenu(false)
@@ -125,6 +128,10 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") app.quit()
 })
 
+ipcMain.on("open-url-in-browser", async (event, url) => {
+    await shell.openExternal(url)
+})
+
 ipcMain.on("SelectPath", (event, args) => {
     const type = args.type
     const mime = args.mime
@@ -182,7 +189,7 @@ ipcMain.on("Download", async (event, args) => {
         let complete = 0
         let audioDownloadMsg = `오디오 다운로드중: 0%`
         let videoDownloadMsg = `영상 다운로드중: 0%`
-        const audio = await ytdl(id,{ //오디오 생성
+        await ytdl(id,{ //오디오 생성
             quality: "highestaudio",
             format: "mp3"
         }).on("progress", async (chunkLength, downloaded, total) => {
@@ -225,7 +232,7 @@ ipcMain.on("Download", async (event, args) => {
         })
         if(type === DownloadType.AUDIO) return
 
-        const video = await ytdl(id,{ //비디오 생성
+        await ytdl(id,{ //비디오 생성
             quality: "highestvideo",
             format: "mp4"
         }).on("progress", async (chunkLength, downloaded, total) => {
@@ -245,8 +252,9 @@ ipcMain.on("Download", async (event, args) => {
             downloadingCount--
             if(downloadingCount === 0) await tray.setImage(trayImage)
         })
-    
 
+
+        const command = `"${ffmpegPath.replaceAll("\\", "/")}" -i "${videoPath}" -i "${audioPath}" -c copy "${path}"`
         const interval = setInterval(() => { //합치기
             if(complete === 2) {
                 if(liveDotInterval) clearInterval(liveDotInterval)
@@ -257,7 +265,6 @@ ipcMain.on("Download", async (event, args) => {
                     if(dot.length < 6) dot +=" ."
                     else dot = " ."
                 }, 500)
-                const command = `"${ffmpegPath.replaceAll("\\", "/")}" -i "${videoPath}" -i "${audioPath}" -c copy "${path}"`
                 exec(command, async (error, stdout, stderr) => {
                     clearInterval(dotInterval)
                     if(error) console.log(error)

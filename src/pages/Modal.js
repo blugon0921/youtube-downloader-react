@@ -8,8 +8,8 @@ import ReactModal from "react-modal";
 const ytdl = window.require("@distube/ytdl-core")
 const { ipcRenderer } = window.require("electron")
 const Path = window.require("path")
-const desktopDir = Path.join(window.require("os").homedir(), "Desktop")
-const defaultDownloadPath = window.require("downloads-folder")()
+// const desktopDir = Path.join(window.process.env.USERPROFILE, "Desktop")
+const defaultDownloadPath = Path.join(window.process.env.USERPROFILE, "Downloads")
 const fs = window.require("fs")
 
 const Modal = styled.div`
