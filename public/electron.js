@@ -21,11 +21,7 @@ if(!isFirst) {
 })
 
 /*
-1.0.12
-
-다운로드 안되는 버그 수정
-다운로드 기록 클릭시 유튜브로 이동
-다운로드 기록에 있는 제목에 마우스 호버시 풀 제목 표시
+1.0.13
 
 */
 if(!isDev) Menu.setApplicationMenu(false)
