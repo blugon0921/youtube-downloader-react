@@ -1,12 +1,12 @@
 {
   "name": "youtube_downloader",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "author": "Blugon",
   "private": true,
   "main": "public/electron.js",
   "homepage": "./",
   "dependencies": {
-    "@distube/ytdl-core": "^4.14.4",
+    "@distube/ytdl-core": "^4.16.0",
     "@electron/remote": "^2.1.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -19,17 +19,18 @@
     "hidefile": "^3.0.0",
     "node-fetch": "^3.3.2",
     "progress-estimator": "^0.3.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-modal": "^3.16.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-modal": "^3.16.3",
     "react-scripts": "5.0.1",
-    "react-select": "^5.8.0",
-    "styled-components": "^6.1.6",
+    "react-select": "^5.10.0",
+    "styled-components": "^6.1.15",
+    "undici": "^7.3.0",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "electron": "31.2.0",
-    "electron-builder": "^24.9.1"
+    "electron": "^31.2.0",
+    "electron-builder": "^24.13.3"
   },
   "scripts": {
     "react-start": "react-scripts start",

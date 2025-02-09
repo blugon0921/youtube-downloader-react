@@ -275,18 +275,19 @@ const cantChars = [
 export default function(props) {
   const url = props.url
   const id = youtubeID(url)
-  const thumbnail = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`
+  const [thumbnail, setThumbnail] = useState(`https://i.ytimg.com/vi/${id}/mqdefault.jpg`);
   
   const [channelName, setChannelName] = useState("검색중...")
   const [videoTitle, setVideoTitle] = useState("검색중...")
 
   const [isOpenNoVideoModal, setIsOpenNoVideoModal] = useState(false)
   useEffect(() => {
-    ytdl.getInfo(url).then(video => {
+    ytdl.getBasicInfo(url).then(video => {
       const info = video.videoDetails
       const author = info.author
       setChannelName(author.name)
       setVideoTitle(info.title)
+      setThumbnail(info.thumbnails[info.thumbnails.length-1].url)
       const beforePath = window.localStorage.getItem("lastPath")
       let fileTitle = info.title
       cantChars.forEach((c) => {
@@ -297,7 +298,7 @@ export default function(props) {
       setPathDisabled(false)
     }).catch((e) => {
       setIsOpenNoVideoModal(true)
-      props.setUrl("")
+      // props.setUrl("")
     })
   }, [])
 
@@ -468,7 +469,10 @@ export default function(props) {
       >
         <h3>동영상이 비공개거나 존재하지 않습니다</h3>
         <ExistBtnsDiv>
-          <ExistBtn className={"noVideo"} onClick={() => props.setModal(false)}>확인</ExistBtn>
+          <ExistBtn className={"noVideo"} onClick={() => {
+            props.setModal(false)
+            props.setUrl("")
+          }}>확인</ExistBtn>
         </ExistBtnsDiv>
       </ReactModal>
     </Modal>

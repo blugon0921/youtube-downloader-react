@@ -20,8 +20,9 @@ if(!isFirst) {
     win.show()
 })
 
+
 /*
-1.0.13
+1.0.14
 
 */
 if(!isDev) Menu.setApplicationMenu(false)
@@ -170,7 +171,7 @@ ipcMain.on("Download", async (event, args) => {
         const videoPath = `${Path.dirname(path)}/.${Path.basename(path)}.${randomCode}.mp4`
         let audioPath = `${Path.dirname(path)}/.${Path.basename(path)}.${randomCode}.mp3`
         // if(type === DownloadType.AUDIO) audioPath = `${path}.mp3`
-        const videoInfo = (await ytdl.getInfo(url))
+        const videoInfo = (await ytdl.getBasicInfo(url))
         const isLive = videoInfo.videoDetails.isLiveContent && videoInfo.videoDetails.liveBroadcastDetails?.isLiveNow
 
         let liveDotInterval
