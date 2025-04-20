@@ -1,12 +1,12 @@
 {
   "name": "youtube_downloader",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": "Blugon",
   "private": true,
   "main": "public/electron.js",
   "homepage": "./",
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.0",
+    "@distube/ytdl-core": "^4.16.8",
     "@electron/remote": "^2.1.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",

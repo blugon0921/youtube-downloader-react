@@ -22,7 +22,7 @@ if(!isFirst) {
 
 
 /*
-1.0.14
+1.0.15
 
 */
 if(!isDev) Menu.setApplicationMenu(false)
@@ -178,23 +178,23 @@ ipcMain.on("Download", async (event, args) => {
         if(isLive) {
             let dot = " ."
             liveDotInterval = setInterval(() => {
-                event.sender.send(`SetStatus${downloadId}`, [`생방송 다운로드중${dot}`])
+                event.sender.send(`SetStatus${downloadId}`, [`생방송 다운로드${dot}`])
                 if(dot.length < 6) dot +=" ."
                 else dot = " ."
             }, 500)
         }
         let complete = 0
-        let audioDownloadMsg = `오디오 다운로드중: 0%`
-        let videoDownloadMsg = `영상 다운로드중: 0%`
+        let audioDownloadMsg = `오디오 다운로드: 0%`
+        let videoDownloadMsg = `영상 다운로드: 0%`
         await ytdl(id,{ //오디오 생성
             quality: "highestaudio",
             format: "mp3"
         }).on("progress", async (chunkLength, downloaded, total) => {
             if(!isLive) {
-                if(type === DownloadType.AUDIO) event.sender.send(`SetStatus${downloadId}`, [`오디오 다운로드중: ${Math.round(downloaded/total*1000)/10}%`])
+                if(type === DownloadType.AUDIO) event.sender.send(`SetStatus${downloadId}`, [`오디오 다운로드: ${Math.round(downloaded/total*1000)/10}%`])
                 else {
                     const percent = Math.round(downloaded/total*1000)/10
-                    audioDownloadMsg = `오디오 다운로드중: ${(percent===100)? "완료" : `${percent}%`}`
+                    audioDownloadMsg = `오디오 다운로드: ${(percent===100)? "완료" : `${percent}%`}`
                     event.sender.send(`SetStatus${downloadId}`, [`${audioDownloadMsg}\n${videoDownloadMsg}`])
                 }
             }
@@ -233,10 +233,10 @@ ipcMain.on("Download", async (event, args) => {
             quality: "highestvideo",
             format: "mp4"
         }).on("progress", async (chunkLength, downloaded, total) => {
-            // if(!isLive) event.sender.send(`SetStatus${downloadId}`, [`영상 다운로드중: ${Math.round(downloaded/total*1000)/10}%`])
+            // if(!isLive) event.sender.send(`SetStatus${downloadId}`, [`영상 다운로드: ${Math.round(downloaded/total*1000)/10}%`])
             if(!isLive) {
                 const percent = Math.round(downloaded/total*1000)/10
-                videoDownloadMsg = `영상 다운로드중: ${(percent===100)? "완료" : `${percent}%`}`
+                videoDownloadMsg = `영상 다운로드: ${(percent===100)? "완료" : `${percent}%`}`
                 event.sender.send(`SetStatus${downloadId}`, [`${audioDownloadMsg}\n${videoDownloadMsg}`])
             }
         }).pipe(fs.createWriteStream(videoPath)).on("open", () => {

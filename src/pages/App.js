@@ -156,7 +156,7 @@ export default function() {
 
   return (
     <App id="App">
-      <Version>v1.0.14</Version>
+      <Version>v1.0.15</Version>
       <Icon src="icons/cloud-arrow-down-solid.svg"></Icon>
       <Title>Youtube Downloader</Title>
       <Center>
